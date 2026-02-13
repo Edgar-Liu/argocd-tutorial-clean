@@ -24,6 +24,8 @@ spec:
         env:
         - name: VERSION
           value: "v1.0.0"
+        - name: IMAGE_TAG
+          value: "v1-amd64" # IMAGE_TAG
         resources:
           requests:
             memory: "64Mi"

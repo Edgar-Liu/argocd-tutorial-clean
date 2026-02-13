@@ -65,7 +65,8 @@ jobs:
         IMAGE_TAG: ${{ steps.image-tag.outputs.tag }}
       run: |
         sed -i "s|image:.*|image: $IMAGE_FULL_PATH|" k8s/base/deployment.yaml
-        cat k8s/base/deployment.yaml | grep "image:"
+        sed -i "s|value: \".*\" # IMAGE_TAG|value: \"$IMAGE_TAG\" # IMAGE_TAG|" k8s/base/deployment.yaml
+        cat k8s/base/deployment.yaml | grep -E "image:|IMAGE_TAG"
     
     - name: Commit and push manifest changes
       if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
