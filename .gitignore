@@ -22,6 +22,8 @@ Thumbs.db
 *.key
 .env
 secrets/
+values.yaml
+k8s/overlays/local/
 
 # Temporary
 *.tmp

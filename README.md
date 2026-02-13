@@ -138,12 +138,13 @@ export IMAGE_TAG=$(git rev-parse --short HEAD)
 aws ecr create-repository --repository-name $IMAGE_NAME --region $AWS_REGION --profile raid-commonsvcs-prod
 
 # Login to ECR
-aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+aws ecr get-login-password --region $AWS_REGION --profile raid-commonsvcs-prod | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
 # Build and push
 cd app
 docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_NAME:$IMAGE_TAG .
 docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_NAME:$IMAGE_TAG
+cd -
 ```
 
 **Option B: Docker Hub**
