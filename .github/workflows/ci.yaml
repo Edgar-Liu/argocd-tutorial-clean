@@ -3,7 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - YOUR_BRANCH_NAME  # Replace with your branch name
+      - Edgar-Liu  # Replace with your branch name
 
 env:
   AWS_REGION: ap-southeast-1
