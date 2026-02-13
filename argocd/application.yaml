@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: demo-app-edgar-liu
+  name: demo-app
   namespace: argocd
   labels:
     app: demo-app
@@ -11,13 +11,13 @@ spec:
   project: default
   
   source:
-    repoURL: https://github.com/Edgar-Liu/argocd-tutorial.git
-    targetRevision: Edgar-Liu
+    repoURL: https://github.com/YOUR_USERNAME/argocd-tutorial.git
+    targetRevision: main
     path: k8s/base
   
   destination:
     server: https://kubernetes.default.svc
-    namespace: demo-app-edgar-liu
+    namespace: demo-app
   
   syncPolicy:
     automated:

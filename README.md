@@ -190,7 +190,7 @@ sed -i '' "s|value: \".*\" # IMAGE_TAG|value: \"$IMAGE_TAG\" # IMAGE_TAG|" k8s/b
 
 # Update ArgoCD application with your GitHub username and branch
 sed -i '' "s|YOUR_USERNAME|$GITHUB_USERNAME|" argocd/application.yaml
-sed -i '' "s|targetRevision: master|targetRevision: $BRANCH_NAME|" argocd/application.yaml
+sed -i '' "s|targetRevision: main|targetRevision: $BRANCH_NAME|" argocd/application.yaml
 sed -i '' "s|  name: demo-app|  name: demo-app-$K8S_USERNAME|" argocd/application.yaml
 sed -i '' "s|    namespace: demo-app|    namespace: demo-app-$K8S_USERNAME|" argocd/application.yaml
 
@@ -434,7 +434,7 @@ git push origin test-cicd
 3. Create a PR and merge it
 4. Watch ArgoCD sync the new image (within 3 minutes)
 
-✅ **CI/CD is working!** Every push to master now automatically builds and deploys!
+✅ **CI/CD is working!** Every push to main now automatically builds and deploys!
 
 ---
 
