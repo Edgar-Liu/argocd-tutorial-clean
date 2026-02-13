@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: demo-app
-        image: 637423367961.dkr.ecr.ap-southeast-1.amazonaws.com/demo-app:0a402f1
+        image: 637423367961.dkr.ecr.ap-southeast-1.amazonaws.com/demo-app:5051875
         ports:
         - containerPort: 3000
           name: http
@@ -25,7 +25,7 @@ spec:
         - name: VERSION
           value: "v1.0.0"
         - name: IMAGE_TAG
-          value: "0a402f1" # IMAGE_TAG
+          value: "5051875" # IMAGE_TAG
         resources:
           requests:
             memory: "64Mi"
