@@ -86,6 +86,10 @@ argocd-tutorial/
 
 ## 🏃 Quick Start
 
+> **⚠️ IMPORTANT FOR MACBOOK USERS (Apple Silicon M1/M2/M3)**  
+> You MUST build images with `docker buildx build --platform linux/amd64` instead of regular `docker build`.  
+> See [MacBook Users Guide](docs/macbook-users.md) for details.
+
 ### Prerequisites
 
 - Kubernetes cluster (minikube, kind, or cloud provider)
@@ -142,8 +146,13 @@ aws ecr get-login-password --region $AWS_REGION --profile raid-commonsvcs-prod |
 
 # Build and push
 cd app
-docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_NAME:$IMAGE_TAG .
-docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_NAME:$IMAGE_TAG
+
+# IMPORTANT: For MacBook users (Apple Silicon M1/M2/M3)
+# You MUST build for linux/amd64 platform, not ARM64
+docker buildx build --platform linux/amd64 \
+  -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_NAME:$IMAGE_TAG \
+  --push .
+
 cd -
 ```
 
@@ -160,11 +169,20 @@ docker login
 
 # Build and push
 cd app
-docker build -t $DOCKER_USERNAME/$IMAGE_NAME:$IMAGE_TAG .
-docker push $DOCKER_USERNAME/$IMAGE_NAME:$IMAGE_TAG
+
+# IMPORTANT: For MacBook users (Apple Silicon M1/M2/M3)
+# You MUST build for linux/amd64 platform
+docker buildx build --platform linux/amd64 \
+  -t $DOCKER_USERNAME/$IMAGE_NAME:$IMAGE_TAG \
+  --push .
+
+cd -
 ```
 
 ### 4. Update Kubernetes Manifest
+
+**IMPORTANT NOTE FOR MACBOOK USERS:**
+If you're using Apple Silicon (M1/M2/M3), you MUST use `docker buildx build --platform linux/amd64` instead of regular `docker build`. Otherwise your app will crash with "exec format error" on AMD64 Kubernetes nodes.
 
 ```bash
 # Update image tag in deployment
