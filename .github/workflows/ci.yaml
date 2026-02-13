@@ -13,11 +13,14 @@ on:
 env:
   IMAGE_NAME: demo-app
   AWS_REGION: ap-southeast-1
+<<<<<<< Updated upstream
 
 permissions:
   id-token: write
   contents: write
   pull-requests: write
+=======
+>>>>>>> Stashed changes
 
 jobs:
   build-and-deploy:
