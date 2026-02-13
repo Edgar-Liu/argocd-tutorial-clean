@@ -8,7 +8,7 @@ const VERSION = process.env.VERSION || 'v1.0.0';
 app.get('/', (req, res) => {
   const imageTag = process.env.IMAGE_TAG || 'unknown';
   res.json({
-    message: 'Welcome to ArgoCD Tutorial Demo App!',
+    message: 'Welcome to ArgoCD with CI/CD!',
     version: VERSION,
     imageTag: imageTag,
     hostname: os.hostname(),
