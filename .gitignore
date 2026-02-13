@@ -1,0 +1,28 @@
+# Node
+node_modules/
+npm-debug.log
+package-lock.json
+
+# Docker
+.dockerignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+*.pem
+*.key
+.env
+secrets/
+
+# Temporary
+*.tmp
+*.log
