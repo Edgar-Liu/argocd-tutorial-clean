@@ -3,24 +3,15 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main
-      - master
-  pull_request:
-    branches:
-      - main
-      - master
+      - YOUR_BRANCH_NAME  # Replace with your branch name
 
 env:
-  IMAGE_NAME: demo-app
   AWS_REGION: ap-southeast-1
-<<<<<<< Updated upstream
 
 permissions:
   id-token: write
   contents: write
   pull-requests: write
-=======
->>>>>>> Stashed changes
 
 jobs:
   build-and-deploy:
@@ -34,6 +25,13 @@ jobs:
     
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+    
+    - name: Get ECR repository name from deployment
+      id: get-ecr-repo
+      run: |
+        ECR_REPO=$(grep 'image:' k8s/base/deployment.yaml | awk -F'/' '{print $2}' | cut -d':' -f1)
+        echo "repo=$ECR_REPO" >> $GITHUB_OUTPUT
+        echo "ECR Repository: $ECR_REPO"
     
     - name: Generate image tag
       id: image-tag
@@ -55,13 +53,14 @@ jobs:
     - name: Build and push to ECR
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPO: ${{ steps.get-ecr-repo.outputs.repo }}
         IMAGE_TAG: ${{ steps.image-tag.outputs.tag }}
       run: |
         cd app
         docker buildx build --platform linux/amd64 \
-          -t $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG \
+          -t $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG \
           --push .
-        echo "IMAGE_FULL_PATH=$ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV
+        echo "IMAGE_FULL_PATH=$ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG" >> $GITHUB_ENV
     
     - name: Update Kubernetes manifest
       env:
@@ -72,22 +71,9 @@ jobs:
         cat k8s/base/deployment.yaml | grep -E "image:|IMAGE_TAG"
     
     - name: Commit and push manifest changes
-      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
       run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
         git add k8s/base/deployment.yaml
         git diff --staged --quiet || git commit -m "chore: update image tag to ${{ steps.image-tag.outputs.tag }} [skip ci]"
         git push
-    
-    - name: Comment on PR
-      if: github.event_name == 'pull_request'
-      uses: actions/github-script@v7
-      with:
-        script: |
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: `✅ Docker image built successfully!\n\nImage: \`${process.env.IMAGE_FULL_PATH}\`\n\nBuilt for: \`linux/amd64\``
-          })
