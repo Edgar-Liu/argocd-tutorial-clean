@@ -4,21 +4,24 @@ on:
   push:
     branches:
       - main
+      - master
   pull_request:
     branches:
       - main
+      - master
 
 env:
   IMAGE_NAME: demo-app
-  AWS_REGION: us-east-1
+  AWS_REGION: ap-southeast-1
+
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
-    permissions:
-      contents: write
-      pull-requests: write
     
     steps:
     - name: Checkout code
@@ -36,63 +39,40 @@ jobs:
         echo "tag=$SHORT_SHA" >> $GITHUB_OUTPUT
         echo "Image tag: $SHORT_SHA"
     
-    # Option A: AWS ECR
-    - name: Configure AWS credentials
-      if: vars.USE_ECR == 'true'
+    - name: Configure AWS credentials using OIDC
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         aws-region: ${{ env.AWS_REGION }}
     
     - name: Login to Amazon ECR
-      if: vars.USE_ECR == 'true'
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
     
     - name: Build and push to ECR
-      if: vars.USE_ECR == 'true'
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: ${{ steps.image-tag.outputs.tag }}
       run: |
         cd app
-        docker build -t $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
+        docker buildx build --platform linux/amd64 \
+          -t $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG \
+          --push .
         echo "IMAGE_FULL_PATH=$ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV
-    
-    # Option B: Docker Hub
-    - name: Login to Docker Hub
-      if: vars.USE_ECR != 'true'
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-    
-    - name: Build and push to Docker Hub
-      if: vars.USE_ECR != 'true'
-      env:
-        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        IMAGE_TAG: ${{ steps.image-tag.outputs.tag }}
-      run: |
-        cd app
-        docker build -t $DOCKER_USERNAME/$IMAGE_NAME:$IMAGE_TAG .
-        docker push $DOCKER_USERNAME/$IMAGE_NAME:$IMAGE_TAG
-        echo "IMAGE_FULL_PATH=$DOCKER_USERNAME/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV
     
     - name: Update Kubernetes manifest
       env:
         IMAGE_TAG: ${{ steps.image-tag.outputs.tag }}
       run: |
-        sed -i "s|image:.*|image: $IMAGE_FULL_PATH|" k8s/deployment.yaml
-        cat k8s/deployment.yaml | grep "image:"
+        sed -i "s|image:.*|image: $IMAGE_FULL_PATH|" k8s/base/deployment.yaml
+        cat k8s/base/deployment.yaml | grep "image:"
     
     - name: Commit and push manifest changes
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
       run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
-        git add k8s/deployment.yaml
+        git add k8s/base/deployment.yaml
         git diff --staged --quiet || git commit -m "chore: update image tag to ${{ steps.image-tag.outputs.tag }} [skip ci]"
         git push
     
@@ -105,5 +85,5 @@ jobs:
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: `✅ Docker image built successfully!\n\nImage: \`${process.env.IMAGE_FULL_PATH}\``
+            body: `✅ Docker image built successfully!\n\nImage: \`${process.env.IMAGE_FULL_PATH}\`\n\nBuilt for: \`linux/amd64\``
           })
