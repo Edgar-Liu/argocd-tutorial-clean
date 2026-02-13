@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: demo-app
-        image: REPLACE_WITH_YOUR_IMAGE:latest
+        image: 637423367961.dkr.ecr.ap-southeast-1.amazonaws.com/demo-app:cde8869
         ports:
         - containerPort: 3000
           name: http
