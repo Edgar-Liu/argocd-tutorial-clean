@@ -128,11 +128,19 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 ### Step 2: Fork and Clone Repository
 
 1. Fork this repo on GitHub: https://github.com/Edgar-Liu/argocd-tutorial
-2. Clone your fork:
+2. Clone your fork and create your personal branch:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/argocd-tutorial.git
+# Set your GitHub username (REQUIRED - replace with your actual username)
+export GITHUB_USERNAME=your-github-username
+
+# Clone your fork
+git clone https://github.com/$GITHUB_USERNAME/argocd-tutorial.git
 cd argocd-tutorial
+
+# Create your personal branch (use your name, e.g., john-doe)
+export BRANCH_NAME=your-name
+git checkout -b $BRANCH_NAME
 ```
 
 ### Step 3: Create ECR Repository
@@ -140,8 +148,9 @@ cd argocd-tutorial
 ```bash
 export AWS_REGION=ap-southeast-1
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+export ECR_REPO=demo-app-$GITHUB_USERNAME
 
-aws ecr create-repository --repository-name demo-app --region $AWS_REGION --profile raid-commonsvcs-prod
+aws ecr create-repository --repository-name $ECR_REPO --region $AWS_REGION --profile raid-commonsvcs-prod
 ```
 
 ### Step 4: Build and Push Initial Image (v1)
@@ -157,7 +166,7 @@ aws ecr get-login-password --region $AWS_REGION --profile raid-commonsvcs-prod |
 # Build for AMD64 (important for MacBooks!)
 cd app
 docker buildx build --platform linux/amd64 \
-  -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/demo-app:$IMAGE_TAG \
+  -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG \
   --push .
 cd ..
 ```
@@ -165,48 +174,69 @@ cd ..
 ### Step 5: Update Deployment Manifest and Setup ArgoCD
 
 ```bash
+# Verify your GitHub username is set (from Step 2)
+echo $GITHUB_USERNAME
+# If empty, set it now: export GITHUB_USERNAME=your-github-username
+
 # Update image in deployment
-sed -i '' "s|image:.*|image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/demo-app:$IMAGE_TAG|" k8s/base/deployment.yaml
+sed -i '' "s|image:.*|image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG|" k8s/base/deployment.yaml
 
 # Update image tag env var
 sed -i '' "s|value: \".*\" # IMAGE_TAG|value: \"$IMAGE_TAG\" # IMAGE_TAG|" k8s/base/deployment.yaml
 
-# Update with your GitHub username
-sed -i '' "s|Edgar-Liu|YOUR_USERNAME|" argocd/application.yaml
+# Update ArgoCD application with your GitHub username and branch
+sed -i '' "s|YOUR_USERNAME|$GITHUB_USERNAME|" argocd/application.yaml
+sed -i '' "s|targetRevision: master|targetRevision: $BRANCH_NAME|" argocd/application.yaml
+sed -i '' "s|name: demo-app|name: demo-app-$GITHUB_USERNAME|" argocd/application.yaml
+sed -i '' "s|namespace: demo-app|namespace: demo-app-$GITHUB_USERNAME|" argocd/application.yaml
 
 # Verify changes
+echo "\n=== Deployment image ==="
 grep -E "image:|IMAGE_TAG" k8s/base/deployment.yaml
-grep repoURL argocd/application.yaml
+echo "\n=== ArgoCD config ==="
+grep -E "name:|repoURL|targetRevision|namespace:" argocd/application.yaml | head -6
+echo ""
+
+# IMPORTANT: Verify everything shows YOUR username and branch, not placeholders
 ```
 
 ### Step 6: Commit and Deploy with ArgoCD
 
 ```bash
-# Commit and push
+# Commit and push to YOUR branch
 git add k8s/base/deployment.yaml argocd/application.yaml
 git commit -m "Initial setup with image $IMAGE_TAG"
-git push origin master
+git push origin $BRANCH_NAME
 
-# Create ArgoCD application
+# Create ArgoCD application (this will deploy the app)
 kubectl apply -f argocd/application.yaml
 
-# Watch it sync (takes 1-2 minutes)
-kubectl get pods -n demo-app -w
+# Watch ArgoCD create the namespace and deploy pods (takes 1-2 minutes)
+kubectl get pods -n demo-app-$GITHUB_USERNAME -w
 ```
+
+**What's happening:**
+- ArgoCD reads your Git repo (your branch: `$BRANCH_NAME`)
+- Creates the `demo-app-$GITHUB_USERNAME` namespace
+- Deploys all resources from `k8s/base/`
+- Pods start running
 
 **Expected output:**
 ```
-NAME                       READY   STATUS    RESTARTS   AGE
-demo-app-646f6fdc9b-8j25v  1/1     Running   0          30s
-demo-app-646f6fdc9b-hf4ts  1/1     Running   0          30s
-demo-app-646f6fdc9b-lm92j  1/1     Running   0          30s
+NAME                       READY   STATUS              RESTARTS   AGE
+demo-app-646f6fdc9b-8j25v  0/1     ContainerCreating   0          5s
+demo-app-646f6fdc9b-hf4ts  0/1     ContainerCreating   0          5s
+demo-app-646f6fdc9b-lm92j  0/1     ContainerCreating   0          5s
+demo-app-646f6fdc9b-8j25v  1/1     Running             0          30s
+demo-app-646f6fdc9b-hf4ts  1/1     Running             0          30s
+demo-app-646f6fdc9b-lm92j  1/1     Running             0          30s
 ```
 
 ### Step 7: Test the Application (v1)
 
 ```bash
 # Port forward (in separate terminal)
-kubectl port-forward -n demo-app svc/demo-app 3000:80
+kubectl port-forward -n demo-app-$GITHUB_USERNAME svc/demo-app 3000:80
 
 # Test
 curl http://localhost:3000
@@ -234,7 +264,7 @@ Now let's update to v2 and see ArgoCD automatically detect and deploy the change
 export IMAGE_TAG=v2-amd64
 cd app
 docker buildx build --platform linux/amd64 \
-  -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/demo-app:$IMAGE_TAG \
+  -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG \
   --push .
 cd ..
 
@@ -245,10 +275,10 @@ sed -i '' "s|value: \"v1-amd64\" # IMAGE_TAG|value: \"$IMAGE_TAG\" # IMAGE_TAG|"
 # 3. Commit and push
 git add k8s/base/deployment.yaml
 git commit -m "Update to v2"
-git push origin master
+git push origin $BRANCH_NAME
 
 # 4. Watch ArgoCD detect and sync (within 3 minutes)
-kubectl get pods -n demo-app -w
+kubectl get pods -n demo-app-$GITHUB_USERNAME -w
 ```
 
 **Test the v2 update:**
@@ -284,13 +314,13 @@ sed -i '' 's/Welcome to ArgoCD Tutorial Demo App!/Welcome to ArgoCD with CI\/CD!
 # 2. Commit and push (CI will build image with Git SHA tag)
 git add app/server.js
 git commit -m "feat: update welcome message"
-git push origin master
+git push origin $BRANCH_NAME
 
 # 3. Watch GitHub Actions build and push
 # Go to: https://github.com/YOUR_USERNAME/argocd-tutorial/actions
 
 # 4. After CI completes, watch ArgoCD sync (within 3 minutes)
-kubectl get pods -n demo-app -w
+kubectl get pods -n demo-app-$GITHUB_USERNAME -w
 ```
 
 **Test the CI/CD update:**
