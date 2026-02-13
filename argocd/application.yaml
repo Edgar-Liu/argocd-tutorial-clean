@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: demo-app-edgar-liu-edgar-liu-
+  name: demo-app-edgar-liu-edgar-liu-edgar-liu-
   namespace: argocd
   labels:
     app: demo-app
@@ -17,7 +17,7 @@ spec:
   
   destination:
     server: https://kubernetes.default.svc
-    namespace: demo-app-edgar-liu-edgar-liu-
+    namespace: demo-app-edgar-liu-edgar-liu-edgar-liu-
   
   syncPolicy:
     automated:
