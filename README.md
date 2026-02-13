@@ -139,7 +139,7 @@ git clone https://github.com/$GITHUB_USERNAME/argocd-tutorial.git
 cd argocd-tutorial
 
 # Create your personal branch (use your name, e.g., john-doe)
-export BRANCH_NAME=your-name
+export BRANCH_NAME=your-github-username
 git checkout -b $BRANCH_NAME
 ```
 
@@ -148,7 +148,8 @@ git checkout -b $BRANCH_NAME
 ```bash
 export AWS_REGION=ap-southeast-1
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-export ECR_REPO=demo-app-$GITHUB_USERNAME
+# Normalize username: lowercase, replace underscores/dots with hyphens
+export ECR_REPO=demo-app-$(echo $GITHUB_USERNAME | tr '[:upper:]' '[:lower:]' | tr '_.' '-')
 
 aws ecr create-repository --repository-name $ECR_REPO --region $AWS_REGION --profile raid-commonsvcs-prod
 ```
@@ -178,6 +179,9 @@ cd ..
 echo $GITHUB_USERNAME
 # If empty, set it now: export GITHUB_USERNAME=your-github-username
 
+# Normalize username for Kubernetes (lowercase, replace underscores/dots with hyphens)
+export K8S_USERNAME=$(echo $GITHUB_USERNAME | tr '[:upper:]' '[:lower:]' | tr '_.' '-')
+
 # Update image in deployment
 sed -i '' "s|image:.*|image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG|" k8s/base/deployment.yaml
 
@@ -187,8 +191,8 @@ sed -i '' "s|value: \".*\" # IMAGE_TAG|value: \"$IMAGE_TAG\" # IMAGE_TAG|" k8s/b
 # Update ArgoCD application with your GitHub username and branch
 sed -i '' "s|YOUR_USERNAME|$GITHUB_USERNAME|" argocd/application.yaml
 sed -i '' "s|targetRevision: master|targetRevision: $BRANCH_NAME|" argocd/application.yaml
-sed -i '' "s|name: demo-app|name: demo-app-$GITHUB_USERNAME|" argocd/application.yaml
-sed -i '' "s|namespace: demo-app|namespace: demo-app-$GITHUB_USERNAME|" argocd/application.yaml
+sed -i '' "s|  name: demo-app|  name: demo-app-$K8S_USERNAME|" argocd/application.yaml
+sed -i '' "s|    namespace: demo-app|    namespace: demo-app-$K8S_USERNAME|" argocd/application.yaml
 
 # Verify changes
 echo "\n=== Deployment image ==="
@@ -212,12 +216,12 @@ git push origin $BRANCH_NAME
 kubectl apply -f argocd/application.yaml
 
 # Watch ArgoCD create the namespace and deploy pods (takes 1-2 minutes)
-kubectl get pods -n demo-app-$GITHUB_USERNAME -w
+kubectl get pods -n demo-app-$K8S_USERNAME -w
 ```
 
 **What's happening:**
 - ArgoCD reads your Git repo (your branch: `$BRANCH_NAME`)
-- Creates the `demo-app-$GITHUB_USERNAME` namespace
+- Creates the `demo-app-$K8S_USERNAME` namespace
 - Deploys all resources from `k8s/base/`
 - Pods start running
 
@@ -236,7 +240,7 @@ demo-app-646f6fdc9b-lm92j  1/1     Running             0          30s
 
 ```bash
 # Port forward (in separate terminal)
-kubectl port-forward -n demo-app-$GITHUB_USERNAME svc/demo-app 3000:80
+kubectl port-forward -n demo-app-$K8S_USERNAME svc/demo-app 3000:80
 
 # Test
 curl http://localhost:3000
@@ -278,7 +282,7 @@ git commit -m "Update to v2"
 git push origin $BRANCH_NAME
 
 # 4. Watch ArgoCD detect and sync (within 3 minutes)
-kubectl get pods -n demo-app-$GITHUB_USERNAME -w
+kubectl get pods -n demo-app-$K8S_USERNAME -w
 ```
 
 **Test the v2 update:**
@@ -320,7 +324,7 @@ git push origin $BRANCH_NAME
 # Go to: https://github.com/YOUR_USERNAME/argocd-tutorial/actions
 
 # 4. After CI completes, watch ArgoCD sync (within 3 minutes)
-kubectl get pods -n demo-app-$GITHUB_USERNAME -w
+kubectl get pods -n demo-app-$K8S_USERNAME -w
 ```
 
 **Test the CI/CD update:**
