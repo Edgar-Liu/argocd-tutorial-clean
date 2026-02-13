@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: demo-app
-        image: .dkr.ecr..amazonaws.com/:v1-amd64
+        image: .dkr.ecr..amazonaws.com/:v2-amd64
         ports:
         - containerPort: 3000
           name: http
@@ -24,7 +24,7 @@ spec:
         - name: VERSION
           value: "v1.0.0"
         - name: IMAGE_TAG
-          value: "v1-amd64" # IMAGE_TAG
+          value: "v2-amd64" # IMAGE_TAG
         resources:
           requests:
             memory: "64Mi"
