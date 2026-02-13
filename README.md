@@ -307,9 +307,34 @@ curl http://localhost:3000
 - Automatically synced to Kubernetes
 - Notice `imageTag` changed from `v1-amd64` to `v2-amd64`
 
-### Step 9: See Automated CI/CD with Git SHA Tags
+### Step 9: Enable CI/CD for Your Branch (Optional)
 
-Now let's use CI/CD to automatically build and deploy with Git commit SHA:
+Set up automated builds so every code change triggers CI/CD:
+
+```bash
+# Update CI workflow to watch YOUR branch
+sed -i '' "s|YOUR_BRANCH_NAME|$BRANCH_NAME|" .github/workflows/ci.yaml
+
+# Verify the change
+grep "branches:" -A 1 .github/workflows/ci.yaml
+
+# Commit and push
+git add .github/workflows/ci.yaml
+git commit -m "Enable CI/CD for $BRANCH_NAME"
+git push origin $BRANCH_NAME
+```
+
+**What this does:**
+- GitHub Actions will now trigger on pushes to YOUR branch
+- Automatically builds Docker images with Git SHA tags
+- Updates deployment manifest
+- ArgoCD syncs the changes
+
+**Note:** You need AWS_ROLE_ARN secret configured (see "Setting Up CI/CD" section below).
+
+### Step 10: Test Automated CI/CD
+
+Now let's make a code change and watch the full automation:
 
 ```bash
 # 1. Make a code change
