@@ -143,6 +143,8 @@ export BRANCH_NAME=your-github-username
 git checkout -b $BRANCH_NAME
 ```
 
+> **💡 IMPORTANT:** Keep this terminal window open throughout the tutorial! If you close it, you'll need to re-export all variables from Steps 2-4.
+
 ### Step 3: Create ECR Repository
 
 ```bash
@@ -279,6 +281,7 @@ sed -i '' "s|value: \"v1-amd64\" # IMAGE_TAG|value: \"$IMAGE_TAG\" # IMAGE_TAG|"
 # 3. Commit and push
 git add k8s/base/deployment.yaml
 git commit -m "Update to v2"
+git pull --rebase origin $BRANCH_NAME  # Pull any CI changes first
 git push origin $BRANCH_NAME
 
 # 4. Watch ArgoCD detect and sync (within 3 minutes)
@@ -321,6 +324,7 @@ grep "branches:" -A 1 .github/workflows/ci.yaml
 # Commit and push
 git add .github/workflows/ci.yaml
 git commit -m "Enable CI/CD for $BRANCH_NAME"
+git pull --rebase origin $BRANCH_NAME  # Pull any changes first
 git push origin $BRANCH_NAME
 ```
 
