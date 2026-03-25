@@ -103,7 +103,8 @@ echo "ECR_REPO: $ECR_REPO"
 export K8S_USERNAME=$(echo $GITHUB_USERNAME | tr '[:upper:]' '[:lower:]' | tr '_.' '-')
 
 # Update image in deployment
-sed -i '' "s|PLACEHOLDER_IMAGE:v1|$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG|" k8s/base/deployment.yaml
+sed -i '' "s|image:.*|image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG|" k8s/base/deployment.yaml
+sed -i '' "s|value: \".*\" # IMAGE_TAG|value: \"$IMAGE_TAG\" # IMAGE_TAG|" k8s/base/deployment.yaml
 
 # Update ArgoCD application with your GitHub username and branch
 sed -i '' "s|YOUR_USERNAME|$GITHUB_USERNAME|" argocd/application.yaml
@@ -189,17 +190,20 @@ docker buildx build --platform linux/amd64 \
   --push .
 cd ..
 
-# 2. Update deployment manifest
-sed -i '' "s|$ECR_REPO:v1|$ECR_REPO:$IMAGE_TAG|" k8s/base/deployment.yaml
-sed -i '' "s|value: \"v1\" # IMAGE_TAG|value: \"$IMAGE_TAG\" # IMAGE_TAG|" k8s/base/deployment.yaml
+# 2. Update deployment manifest (image and IMAGE_TAG env var)
+sed -i '' "s|image:.*|image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG|" k8s/base/deployment.yaml
+sed -i '' "s|value: \".*\" # IMAGE_TAG|value: \"$IMAGE_TAG\" # IMAGE_TAG|" k8s/base/deployment.yaml
 
-# 3. Commit and push
+# 3. Verify the update
+grep -E "image:|IMAGE_TAG" k8s/base/deployment.yaml
+
+# 4. Commit and push
 git add k8s/base/deployment.yaml
-git commit -m "Update to v2"
+git commit -m "Update to $IMAGE_TAG"
 git pull --rebase origin $BRANCH_NAME
 git push origin $BRANCH_NAME
 
-# 4. Watch ArgoCD detect and sync (within 3 minutes)
+# 5. Watch ArgoCD detect and sync (within 3 minutes)
 kubectl get pods -n demo-app-$K8S_USERNAME -w
 ```
 
@@ -224,6 +228,9 @@ curl http://localhost:3000
 - ArgoCD detected the change
 - Automatically synced to Kubernetes
 - Notice `imageTag` changed from `v1` to `v2`
+
+> **💡 Deploying further updates (v3, v4, etc.):**  
+> Repeat Step 8 with a new `IMAGE_TAG` value each time. The sed commands use wildcard patterns (`image:.*` and `value: ".*"`), so they work regardless of the current tag. Just change `export IMAGE_TAG=v3` and run the same commands.
 
 ## Step 9: Enable CI/CD for Your Branch (Optional)
 

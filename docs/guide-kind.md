@@ -2,9 +2,8 @@
 
 A hands-on tutorial using a local KIND cluster with Docker Hub for container images.
 
-> **⚠️ IMPORTANT FOR MACBOOK USERS (Apple Silicon M1/M2/M3)**  
-> You MUST build images with `docker buildx build --platform linux/amd64` instead of regular `docker build`.  
-> Otherwise your app will crash with "exec format error" on AMD64 Kubernetes nodes.
+> **💡 NOTE:** KIND runs on your Mac's native architecture, so you do NOT need `--platform linux/amd64`.  
+> Regular `docker build` works fine. The `--platform linux/amd64` flag is only needed for remote clusters (EKS) with AMD64 nodes.
 
 ## Prerequisites
 
@@ -83,11 +82,10 @@ export IMAGE_TAG=v1
 # Login to Docker Hub
 docker login -u $DOCKERHUB_USERNAME
 
-# Build and push (use buildx for MacBooks!)
+# Build and push
 cd app
-docker buildx build --platform linux/amd64 \
-  -t $DOCKERHUB_USERNAME/demo-app:$IMAGE_TAG \
-  --push .
+docker build -t $DOCKERHUB_USERNAME/demo-app:$IMAGE_TAG .
+docker push $DOCKERHUB_USERNAME/demo-app:$IMAGE_TAG
 cd ..
 ```
 
@@ -103,7 +101,8 @@ echo "DOCKERHUB_USERNAME: $DOCKERHUB_USERNAME"
 export K8S_USERNAME=$(echo $GITHUB_USERNAME | tr '[:upper:]' '[:lower:]' | tr '_.' '-')
 
 # Update image in deployment
-sed -i '' "s|PLACEHOLDER_IMAGE:v1|$DOCKERHUB_USERNAME/demo-app:$IMAGE_TAG|" k8s/base/deployment.yaml
+sed -i '' "s|image:.*|image: $DOCKERHUB_USERNAME/demo-app:$IMAGE_TAG|" k8s/base/deployment.yaml
+sed -i '' "s|value: \".*\" # IMAGE_TAG|value: \"$IMAGE_TAG\" # IMAGE_TAG|" k8s/base/deployment.yaml
 
 # Update ArgoCD application with your GitHub username and branch
 sed -i '' "s|YOUR_USERNAME|$GITHUB_USERNAME|" argocd/application.yaml
@@ -184,22 +183,24 @@ Now let's update to v2 and see ArgoCD automatically detect and deploy the change
 # 1. Build and push v2 image
 export IMAGE_TAG=v2
 cd app
-docker buildx build --platform linux/amd64 \
-  -t $DOCKERHUB_USERNAME/demo-app:$IMAGE_TAG \
-  --push .
+docker build -t $DOCKERHUB_USERNAME/demo-app:$IMAGE_TAG .
+docker push $DOCKERHUB_USERNAME/demo-app:$IMAGE_TAG
 cd ..
 
-# 2. Update deployment manifest
-sed -i '' "s|$DOCKERHUB_USERNAME/demo-app:v1|$DOCKERHUB_USERNAME/demo-app:$IMAGE_TAG|" k8s/base/deployment.yaml
-sed -i '' "s|value: \"v1\" # IMAGE_TAG|value: \"$IMAGE_TAG\" # IMAGE_TAG|" k8s/base/deployment.yaml
+# 2. Update deployment manifest (image and IMAGE_TAG env var)
+sed -i '' "s|image:.*|image: $DOCKERHUB_USERNAME/demo-app:$IMAGE_TAG|" k8s/base/deployment.yaml
+sed -i '' "s|value: \".*\" # IMAGE_TAG|value: \"$IMAGE_TAG\" # IMAGE_TAG|" k8s/base/deployment.yaml
 
-# 3. Commit and push
+# 3. Verify the update
+grep -E "image:|IMAGE_TAG" k8s/base/deployment.yaml
+
+# 4. Commit and push
 git add k8s/base/deployment.yaml
-git commit -m "Update to v2"
+git commit -m "Update to $IMAGE_TAG"
 git pull --rebase origin $BRANCH_NAME
 git push origin $BRANCH_NAME
 
-# 4. Watch ArgoCD detect and sync (within 3 minutes)
+# 5. Watch ArgoCD detect and sync (within 3 minutes)
 kubectl get pods -n demo-app-$K8S_USERNAME -w
 ```
 
@@ -224,6 +225,9 @@ curl http://localhost:3000
 - ArgoCD detected the change
 - Automatically synced to Kubernetes
 - Notice `imageTag` changed from `v1` to `v2`
+
+> **💡 Deploying further updates (v3, v4, etc.):**  
+> Repeat Step 8 with a new `IMAGE_TAG` value each time. The sed commands use wildcard patterns (`image:.*` and `value: ".*"`), so they work regardless of the current tag. Just change `export IMAGE_TAG=v3` and run the same commands.
 
 ## Step 9: Enable CI/CD for Your Branch (Optional)
 
