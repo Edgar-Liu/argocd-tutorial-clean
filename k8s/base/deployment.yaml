@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: demo-app
-        image: edgarbun/demo-app
+        image: edgarbun/demo-app:v1
         ports:
         - containerPort: 3000
           name: http
