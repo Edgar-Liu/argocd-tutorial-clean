@@ -11,7 +11,7 @@ spec:
   project: default
   
   source:
-    repoURL: https://github.com/YOUR_USERNAME/argocd-tutorial-clean.git
+    repoURL: https://github.com/Edgar-Liu/argocd-tutorial-clean.git
     targetRevision: YOUR_BRANCH
     path: k8s/base
   
