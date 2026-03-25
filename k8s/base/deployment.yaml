@@ -16,11 +16,7 @@ spec:
     spec:
       containers:
       - name: demo-app
-<<<<<<< HEAD
         image: edgarbun/demo-app:v1
-=======
-        image: 637423367961.dkr.ecr.ap-southeast-1.amazonaws.com/demo-app-edgar-liu:v2-amd64
->>>>>>> 07c76fe9ab93ea38638f5b5e5b5613734b887faf
         ports:
         - containerPort: 3000
           name: http
