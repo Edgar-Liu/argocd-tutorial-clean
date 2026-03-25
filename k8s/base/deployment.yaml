@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: demo-app
-        image: .dkr.ecr..amazonaws.com/:v1-amd64
+        image: edgarbun/demo-app
         ports:
         - containerPort: 3000
           name: http
