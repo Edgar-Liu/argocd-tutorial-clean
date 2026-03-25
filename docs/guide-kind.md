@@ -106,9 +106,9 @@ sed -i '' "s|value: \".*\" # IMAGE_TAG|value: \"$IMAGE_TAG\" # IMAGE_TAG|" k8s/b
 
 # Update ArgoCD application with your GitHub username and branch
 sed -i '' "s|YOUR_USERNAME|$GITHUB_USERNAME|" argocd/application.yaml
-sed -i '' "s|targetRevision: main|targetRevision: $BRANCH_NAME|" argocd/application.yaml
-sed -i '' "s|  name: demo-app|  name: demo-app-$K8S_USERNAME|" argocd/application.yaml
-sed -i '' "s|    namespace: demo-app|    namespace: demo-app-$K8S_USERNAME|" argocd/application.yaml
+sed -i '' "s|YOUR_BRANCH|$BRANCH_NAME|" argocd/application.yaml
+sed -i '' "s|ARGOCD_APP_NAME|demo-app-$K8S_USERNAME|" argocd/application.yaml
+sed -i '' "s|ARGOCD_NAMESPACE|demo-app-$K8S_USERNAME|" argocd/application.yaml
 
 # Verify changes
 echo "\n=== Deployment image ==="
