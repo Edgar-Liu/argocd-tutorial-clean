@@ -243,6 +243,9 @@ Set up automated builds so every code change triggers CI/CD.
 ### 9b: Enable the CI Workflow for Your Branch
 
 ```bash
+# Delete the ECR workflow (not needed for KIND)
+rm .github/workflows/ci-ecr.yaml
+
 # Update CI workflow to watch YOUR branch
 sed -i '' "s|YOUR_BRANCH_NAME|$BRANCH_NAME|" .github/workflows/ci-dockerhub.yaml
 
@@ -250,7 +253,7 @@ sed -i '' "s|YOUR_BRANCH_NAME|$BRANCH_NAME|" .github/workflows/ci-dockerhub.yaml
 grep "branches:" -A 1 .github/workflows/ci-dockerhub.yaml
 
 # Commit and push
-git add .github/workflows/ci-dockerhub.yaml
+git add .github/workflows/
 git commit -m "Enable CI/CD for $BRANCH_NAME"
 git pull --rebase origin $BRANCH_NAME
 git push origin $BRANCH_NAME
