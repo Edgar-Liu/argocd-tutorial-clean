@@ -291,6 +291,9 @@ aws iam get-role --role-name GitHubActionsECRRole-$K8S_USERNAME --query 'Role.Ar
 ### 9d: Enable the CI Workflow for Your Branch
 
 ```bash
+# Delete the Docker Hub workflow (not needed for EKS)
+rm .github/workflows/ci-dockerhub.yaml
+
 # Update CI workflow to watch YOUR branch
 sed -i '' "s|YOUR_BRANCH_NAME|$BRANCH_NAME|" .github/workflows/ci-ecr.yaml
 
@@ -298,7 +301,7 @@ sed -i '' "s|YOUR_BRANCH_NAME|$BRANCH_NAME|" .github/workflows/ci-ecr.yaml
 grep "branches:" -A 1 .github/workflows/ci-ecr.yaml
 
 # Commit and push
-git add .github/workflows/ci-ecr.yaml
+git add .github/workflows/
 git commit -m "Enable CI/CD for $BRANCH_NAME"
 git pull --rebase origin $BRANCH_NAME
 git push origin $BRANCH_NAME
