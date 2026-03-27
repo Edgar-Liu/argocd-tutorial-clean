@@ -41,20 +41,17 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 # Password: (from command above)
 ```
 
-## Step 2: Fork and Clone Repository
-
-1. Fork this repo on GitHub: https://github.com/Edgar-Liu/argocd-tutorial-clean
-2. Clone your fork and create your personal branch:
+## Step 3: Clone Repository and Create Your Branch
 
 ```bash
 # Set your GitHub username (REQUIRED - replace with your actual username)
 export GITHUB_USERNAME=your-github-username
 
-# Clone your fork
-git clone https://github.com/$GITHUB_USERNAME/argocd-tutorial-clean.git
-cd argocd-tutorial-clean
+# Clone the repo
+git clone https://github.com/Edgar-Liu/argocd-tutorial-clean.git
+cd argocd-tutorial-clean/01-gitops-basics
 
-# Create your personal branch (use your name, e.g., john-doe)
+# Create your personal branch
 export BRANCH_NAME=$GITHUB_USERNAME
 git checkout -b $BRANCH_NAME
 ```
@@ -140,7 +137,7 @@ kubectl get pods -n demo-app-$K8S_USERNAME -w
 **What's happening:**
 - ArgoCD reads your Git repo (your branch: `$BRANCH_NAME`)
 - Creates the `demo-app-$K8S_USERNAME` namespace
-- Deploys all resources from `k8s/base/`
+- Deploys all resources from `01-gitops-basics/k8s/base/`
 - Pods start running
 
 **Expected output:**
@@ -292,16 +289,16 @@ aws iam get-role --role-name GitHubActionsECRRole-$K8S_USERNAME --query 'Role.Ar
 
 ```bash
 # Delete the Docker Hub workflow (not needed for EKS)
-rm .github/workflows/ci-dockerhub.yaml
+rm ../../.github/workflows/ci-dockerhub.yaml
 
 # Update CI workflow to watch YOUR branch
-sed -i '' "s|YOUR_BRANCH_NAME|$BRANCH_NAME|" .github/workflows/ci-ecr.yaml
+sed -i '' "s|YOUR_BRANCH_NAME|$BRANCH_NAME|" ../../.github/workflows/ci-ecr.yaml
 
 # Verify the change
-grep "branches:" -A 1 .github/workflows/ci-ecr.yaml
+grep "branches:" -A 1 ../../.github/workflows/ci-ecr.yaml
 
 # Commit and push
-git add .github/workflows/
+git add ../../.github/workflows/
 git commit -m "Enable CI/CD for $BRANCH_NAME"
 git pull --rebase origin $BRANCH_NAME
 git push origin $BRANCH_NAME

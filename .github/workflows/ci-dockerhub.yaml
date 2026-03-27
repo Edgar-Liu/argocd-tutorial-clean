@@ -24,7 +24,7 @@ jobs:
     - name: Get Docker Hub repo from deployment
       id: get-repo
       run: |
-        DOCKER_IMAGE=$(grep 'image:' k8s/base/deployment.yaml | awk '{print $2}' | cut -d':' -f1)
+        DOCKER_IMAGE=$(grep 'image:' 01-gitops-basics/k8s/base/deployment.yaml | awk '{print $2}' | cut -d':' -f1)
         echo "repo=$DOCKER_IMAGE" >> $GITHUB_OUTPUT
         echo "Docker image: $DOCKER_IMAGE"
     
@@ -46,7 +46,7 @@ jobs:
         DOCKER_REPO: ${{ steps.get-repo.outputs.repo }}
         IMAGE_TAG: ${{ steps.image-tag.outputs.tag }}
       run: |
-        cd app
+        cd 01-gitops-basics/app
         docker buildx build --platform linux/amd64 \
           -t $DOCKER_REPO:$IMAGE_TAG \
           --push .
@@ -56,15 +56,15 @@ jobs:
       env:
         IMAGE_TAG: ${{ steps.image-tag.outputs.tag }}
       run: |
-        sed -i "s|image:.*|image: $IMAGE_FULL_PATH|" k8s/base/deployment.yaml
-        sed -i "s|value: \".*\" # IMAGE_TAG|value: \"$IMAGE_TAG\" # IMAGE_TAG|" k8s/base/deployment.yaml
-        cat k8s/base/deployment.yaml | grep -E "image:|IMAGE_TAG"
+        sed -i "s|image:.*|image: $IMAGE_FULL_PATH|" 01-gitops-basics/k8s/base/deployment.yaml
+        sed -i "s|value: \".*\" # IMAGE_TAG|value: \"$IMAGE_TAG\" # IMAGE_TAG|" 01-gitops-basics/k8s/base/deployment.yaml
+        cat 01-gitops-basics/k8s/base/deployment.yaml | grep -E "image:|IMAGE_TAG"
     
     - name: Commit and push manifest changes
       run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
-        git add k8s/base/deployment.yaml
+        git add 01-gitops-basics/k8s/base/deployment.yaml
         git diff --staged --quiet || git commit -m "chore: update image tag to ${{ steps.image-tag.outputs.tag }} [skip ci]"
         git pull --rebase origin ${{ github.ref_name }}
         git push
