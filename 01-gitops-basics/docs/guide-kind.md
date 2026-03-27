@@ -59,7 +59,7 @@ export GITHUB_USERNAME=your-github-username
 
 # Set your Docker Hub username (REQUIRED - replace with your actual username)
 export DOCKERHUB_USERNAME=your-dockerhub-username
-cd argocd-tutorial-clean/01-gitops-basics
+cd 01-gitops-basics
 
 # Create your personal branch
 export BRANCH_NAME=$GITHUB_USERNAME
