@@ -13,7 +13,7 @@ spec:
   source:
     repoURL: https://github.com/Edgar-Liu/argocd-tutorial-clean.git
     targetRevision: Edgar-Liu
-    path: k8s/base
+    path: 01-gitops-basics/k8s/base
   
   destination:
     server: https://kubernetes.default.svc

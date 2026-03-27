@@ -28,7 +28,7 @@ jobs:
     - name: Get ECR repository name from deployment
       id: get-ecr-repo
       run: |
-        ECR_REPO=$(grep 'image:' k8s/base/deployment.yaml | awk -F'/' '{print $2}' | cut -d':' -f1)
+        ECR_REPO=$(grep 'image:' 01-gitops-basics/k8s/base/deployment.yaml | awk -F'/' '{print $2}' | cut -d':' -f1)
         echo "repo=$ECR_REPO" >> $GITHUB_OUTPUT
         echo "ECR Repository: $ECR_REPO"
     
@@ -55,7 +55,7 @@ jobs:
         ECR_REPO: ${{ steps.get-ecr-repo.outputs.repo }}
         IMAGE_TAG: ${{ steps.image-tag.outputs.tag }}
       run: |
-        cd app
+        cd 01-gitops-basics/app
         docker buildx build --platform linux/amd64 \
           -t $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG \
           --push .
@@ -65,15 +65,15 @@ jobs:
       env:
         IMAGE_TAG: ${{ steps.image-tag.outputs.tag }}
       run: |
-        sed -i "s|image:.*|image: $IMAGE_FULL_PATH|" k8s/base/deployment.yaml
-        sed -i "s|value: \".*\" # IMAGE_TAG|value: \"$IMAGE_TAG\" # IMAGE_TAG|" k8s/base/deployment.yaml
-        cat k8s/base/deployment.yaml | grep -E "image:|IMAGE_TAG"
+        sed -i "s|image:.*|image: $IMAGE_FULL_PATH|" 01-gitops-basics/k8s/base/deployment.yaml
+        sed -i "s|value: \".*\" # IMAGE_TAG|value: \"$IMAGE_TAG\" # IMAGE_TAG|" 01-gitops-basics/k8s/base/deployment.yaml
+        cat 01-gitops-basics/k8s/base/deployment.yaml | grep -E "image:|IMAGE_TAG"
     
     - name: Commit and push manifest changes
       run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
-        git add k8s/base/deployment.yaml
+        git add 01-gitops-basics/k8s/base/deployment.yaml
         git diff --staged --quiet || git commit -m "chore: update image tag to ${{ steps.image-tag.outputs.tag }} [skip ci]"
         git pull --rebase origin ${{ github.ref_name }}
         git push
