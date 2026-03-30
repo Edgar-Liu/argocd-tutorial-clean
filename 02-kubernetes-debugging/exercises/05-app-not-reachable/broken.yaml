@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: probe-app
+  labels:
+    app: probe-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: probe-app
+  template:
+    metadata:
+      labels:
+        app: probe-app
+    spec:
+      containers:
+      - name: probe-app
+        image: edgarbun/demo-app:v1
+        ports:
+        - containerPort: 3000
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: probe-app
+  labels:
+    app: probe-app
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 3000
+  selector:
+    app: probe-app

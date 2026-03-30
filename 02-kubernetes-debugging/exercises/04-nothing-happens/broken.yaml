@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pending-app
+  labels:
+    app: pending-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pending-app
+  template:
+    metadata:
+      labels:
+        app: pending-app
+    spec:
+      containers:
+      - name: pending-app
+        image: edgarbun/demo-app:v1
+        ports:
+        - containerPort: 3000
+        resources:
+          requests:
+            cpu: "100"
+            memory: "128Gi"

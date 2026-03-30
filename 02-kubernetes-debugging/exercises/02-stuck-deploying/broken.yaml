@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: imagepull-app
+  labels:
+    app: imagepull-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: imagepull-app
+  template:
+    metadata:
+      labels:
+        app: imagepull-app
+    spec:
+      containers:
+      - name: imagepull-app
+        image: edgarbun/demo-app:v999-does-not-exist
+        ports:
+        - containerPort: 3000

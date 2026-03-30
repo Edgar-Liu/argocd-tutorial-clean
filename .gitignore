@@ -25,6 +25,9 @@ secrets/
 values.yaml
 k8s/overlays/local/
 
+# Solutions (instructor only - keep separate)
+SOLUTIONS.md
+
 # Temporary
 *.tmp
 *.log

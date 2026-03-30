@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oom-app
+  labels:
+    app: oom-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oom-app
+  template:
+    metadata:
+      labels:
+        app: oom-app
+    spec:
+      containers:
+      - name: oom-app
+        image: edgarbun/demo-app:v1
+        ports:
+        - containerPort: 3000
+        resources:
+          limits:
+            memory: "4Mi"
+          requests:
+            memory: "4Mi"
