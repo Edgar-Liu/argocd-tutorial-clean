@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ARGOCD_APP_NAME
+  namespace: argocd
+  labels:
+    app: wave-app
+    module: ARGOCD_MODULE_LABEL
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Edgar-Liu/argocd-tutorial-clean.git
+    targetRevision: YOUR_BRANCH
+    path: 03-argocd-deep-dive/exercises/03-sync-waves
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ARGOCD_NAMESPACE
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

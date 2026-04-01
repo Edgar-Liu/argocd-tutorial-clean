@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drift-app
+  labels:
+    app: drift-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: drift-app
+  template:
+    metadata:
+      labels:
+        app: drift-app
+    spec:
+      containers:
+      - name: drift-app
+        image: edgarbun/demo-app:v1
+        ports:
+        - containerPort: 3000
+        env:
+        - name: VERSION
+          value: "v1.0.0"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: drift-app
+  labels:
+    app: drift-app
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 3000
+  selector:
+    app: drift-app

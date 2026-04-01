@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: CHILD_APP_PREFIX-backend
+  namespace: argocd
+  labels:
+    app: backend
+    module: ARGOCD_MODULE_LABEL
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Edgar-Liu/argocd-tutorial-clean.git
+    targetRevision: YOUR_BRANCH
+    path: 03-argocd-deep-dive/exercises/04-app-of-apps/manifests/backend
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ARGOCD_NAMESPACE
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

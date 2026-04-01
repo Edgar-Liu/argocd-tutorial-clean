@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: drift-app-edgar-liu
+  namespace: argocd
+  labels:
+    app: drift-app
+    module: argocd-deep-dive-edgar-liu
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Edgar-Liu/argocd-tutorial-clean.git
+    targetRevision: 
+    path: 03-argocd-deep-dive/exercises/01-drift-detection
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: drift-edgar-liu
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

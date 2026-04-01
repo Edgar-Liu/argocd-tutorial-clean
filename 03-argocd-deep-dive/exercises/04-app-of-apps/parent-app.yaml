@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ARGOCD_APP_NAME
+  namespace: argocd
+  labels:
+    app: parent-app
+    module: ARGOCD_MODULE_LABEL
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Edgar-Liu/argocd-tutorial-clean.git
+    targetRevision: YOUR_BRANCH
+    path: 03-argocd-deep-dive/exercises/04-app-of-apps/apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
