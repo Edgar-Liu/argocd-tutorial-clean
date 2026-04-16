@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: demo-app
-        image: oliverteo/demo-app:v2
+        image: oliverteo/demo-app:74a9a74
         ports:
         - containerPort: 3000
           name: http
@@ -24,7 +24,7 @@ spec:
         - name: VERSION
           value: "v1.0.0"
         - name: IMAGE_TAG
-          value: "v2" # IMAGE_TAG
+          value: "74a9a74" # IMAGE_TAG
         resources:
           requests:
             memory: "64Mi"
