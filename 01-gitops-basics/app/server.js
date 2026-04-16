@@ -9,7 +9,7 @@ app.get('/', (req, res) => {
   const imageTag = process.env.IMAGE_TAG || 'unknown';
   res.json({
     message: 'Welcome to ArgoCD Tutorial Demo App!',
-    version: VERSION,
+    // version: VERSION,
     imageTag: imageTag,
     hostname: os.hostname(),
     timestamp: new Date().toISOString()

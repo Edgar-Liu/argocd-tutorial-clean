@@ -227,24 +227,37 @@ curl http://localhost:3000
 
 Set up automated builds so every code change triggers CI/CD.
 
-### 9a: Add GitHub Secrets
+### 9a: Add GitHub Secret
 
-1. Go to: `https://github.com/$GITHUB_USERNAME/argocd-tutorial-clean/settings/secrets/actions`
-2. Add two secrets:
-   - `DOCKERHUB_USERNAME`: Your Docker Hub username
-   - `DOCKERHUB_TOKEN`: Your Docker Hub access token ([create one here](https://hub.docker.com/settings/security))
+ Each team member creates their own uniquely named secret to avoid conflicts:
+
+1. Go to: `https://github.com/Edgar-Liu/argocd-tutorial-clean/settings/secrets/actions`
+2. Add **one** secret with your name in it:
+   - Name: `DOCKERHUB_TOKEN_<YOUR_NAME>` (e.g., `DOCKERHUB_TOKEN_EDGAR_LIU`)
+   - Value: Your Docker Hub access token ([create one here](https://hub.docker.com/settings/security))
+
+> **Important:** Use your GitHub username in the secret name (uppercase, underscores). This ensures each team member has their own secret.
 
 ### 9b: Enable the CI Workflow for Your Branch
 
 ```bash
+# Your unique secret name (match what you created in 9a)
+export DOCKERHUB_SECRET_NAME=DOCKERHUB_TOKEN_$(echo $GITHUB_USERNAME | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+echo "Your secret name: $DOCKERHUB_SECRET_NAME"
+
 # Delete the ECR workflow (not needed for KIND)
 rm ../../.github/workflows/ci-ecr.yaml
 
-# Update CI workflow to watch YOUR branch
+# Update CI workflow with YOUR branch, username, and secret name
 sed -i '' "s|YOUR_BRANCH_NAME|$BRANCH_NAME|" ../../.github/workflows/ci-dockerhub.yaml
+sed -i '' "s|YOUR_DOCKERHUB_USERNAME|$DOCKERHUB_USERNAME|" ../../.github/workflows/ci-dockerhub.yaml
+sed -i '' "s|YOUR_DOCKERHUB_SECRET|$DOCKERHUB_SECRET_NAME|" ../../.github/workflows/ci-dockerhub.yaml
 
-# Verify the change
+# Verify the changes
+echo "\n=== Branch ==="
 grep "branches:" -A 1 ../../.github/workflows/ci-dockerhub.yaml
+echo "\n=== Docker Hub login ==="
+grep -A 2 "Login to Docker Hub" ../../.github/workflows/ci-dockerhub.yaml
 
 # Commit and push
 git add ../../.github/workflows/
@@ -283,7 +296,7 @@ curl http://localhost:3000
 ```json
 {
   "message": "Welcome to ArgoCD with CI/CD!",
-  "version": "v1.0.0",
+  // "version": "v1.0.0",
   "imageTag": "a3f5c21",
   "hostname": "demo-app-9f8e7d6c5-b4a3z",
   "timestamp": "2026-02-13T07:00:00.000Z"
