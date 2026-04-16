@@ -60,6 +60,7 @@ export GITHUB_USERNAME=your-github-username
 # Set your Docker Hub username (REQUIRED - replace with your actual username)
 export DOCKERHUB_USERNAME=your-dockerhub-username
 cd argocd-tutorial-clean/01-gitops-basics
+export REPO_ROOT=$(cd ../.. && pwd)
 
 # Create your personal branch
 export BRANCH_NAME=$GITHUB_USERNAME
@@ -77,10 +78,8 @@ export IMAGE_TAG=v1
 docker login -u $DOCKERHUB_USERNAME
 
 # Build and push
-cd app
-docker build -t $DOCKERHUB_USERNAME/demo-app:$IMAGE_TAG .
+docker build -t $DOCKERHUB_USERNAME/demo-app:$IMAGE_TAG app/
 docker push $DOCKERHUB_USERNAME/demo-app:$IMAGE_TAG
-cd ..
 ```
 
 ## Step 5: Update Manifests
@@ -176,10 +175,8 @@ Now let's update to v2 and see ArgoCD automatically detect and deploy the change
 ```bash
 # 1. Build and push v2 image
 export IMAGE_TAG=v2
-cd app
-docker build -t $DOCKERHUB_USERNAME/demo-app:$IMAGE_TAG .
+docker build -t $DOCKERHUB_USERNAME/demo-app:$IMAGE_TAG app/
 docker push $DOCKERHUB_USERNAME/demo-app:$IMAGE_TAG
-cd ..
 
 # 2. Update deployment manifest (image and IMAGE_TAG env var)
 sed -i '' "s|image:.*|image: $DOCKERHUB_USERNAME/demo-app:$IMAGE_TAG|" k8s/base/deployment.yaml
@@ -233,7 +230,7 @@ Set up automated builds so every code change triggers CI/CD.
 
 1. Go to: `https://github.com/Edgar-Liu/argocd-tutorial-clean/settings/secrets/actions`
 2. Add **one** secret with your name in it:
-   - Name: `DOCKERHUB_TOKEN_<YOUR_NAME>` (e.g., `DOCKERHUB_TOKEN_EDGAR_LIU`)
+   - Name: `DOCKERHUB_TOKEN_<GITHUB_USERNAME>` (e.g., `DOCKERHUB_TOKEN_EDGAR_LIU`)
    - Value: Your Docker Hub access token ([create one here](https://hub.docker.com/settings/security))
 
 > **Important:** Use your GitHub username in the secret name (uppercase, underscores). This ensures each team member has their own secret.
@@ -246,21 +243,21 @@ export DOCKERHUB_SECRET_NAME=DOCKERHUB_TOKEN_$(echo $GITHUB_USERNAME | tr '[:low
 echo "Your secret name: $DOCKERHUB_SECRET_NAME"
 
 # Delete the ECR workflow (not needed for KIND)
-rm ../../.github/workflows/ci-ecr.yaml
+rm $REPO_ROOT/.github/workflows/ci-ecr.yaml
 
 # Update CI workflow with YOUR branch, username, and secret name
-sed -i '' "s|YOUR_BRANCH_NAME|$BRANCH_NAME|" ../../.github/workflows/ci-dockerhub.yaml
-sed -i '' "s|YOUR_DOCKERHUB_USERNAME|$DOCKERHUB_USERNAME|" ../../.github/workflows/ci-dockerhub.yaml
-sed -i '' "s|YOUR_DOCKERHUB_SECRET|$DOCKERHUB_SECRET_NAME|" ../../.github/workflows/ci-dockerhub.yaml
+sed -i '' "s|YOUR_BRANCH_NAME|$BRANCH_NAME|" $REPO_ROOT/.github/workflows/ci-dockerhub.yaml
+sed -i '' "s|YOUR_DOCKERHUB_USERNAME|$DOCKERHUB_USERNAME|" $REPO_ROOT/.github/workflows/ci-dockerhub.yaml
+sed -i '' "s|YOUR_DOCKERHUB_SECRET|$DOCKERHUB_SECRET_NAME|" $REPO_ROOT/.github/workflows/ci-dockerhub.yaml
 
 # Verify the changes
 echo "\n=== Branch ==="
-grep "branches:" -A 1 ../../.github/workflows/ci-dockerhub.yaml
+grep "branches:" -A 1 $REPO_ROOT/.github/workflows/ci-dockerhub.yaml
 echo "\n=== Docker Hub login ==="
-grep -A 2 "Login to Docker Hub" ../../.github/workflows/ci-dockerhub.yaml
+grep -A 2 "Login to Docker Hub" $REPO_ROOT/.github/workflows/ci-dockerhub.yaml
 
 # Commit and push
-git add ../../.github/workflows/
+git add $REPO_ROOT/.github/workflows/
 git commit -m "Enable CI/CD for $BRANCH_NAME"
 git pull --rebase origin $BRANCH_NAME
 git push origin $BRANCH_NAME

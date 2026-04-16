@@ -50,6 +50,7 @@ export GITHUB_USERNAME=your-github-username
 # Clone the repo
 git clone https://github.com/Edgar-Liu/argocd-tutorial-clean.git
 cd argocd-tutorial-clean/01-gitops-basics
+export REPO_ROOT=$(cd ../.. && pwd)
 
 # Create your personal branch
 export BRANCH_NAME=$GITHUB_USERNAME
@@ -80,11 +81,9 @@ aws ecr get-login-password --region $AWS_REGION --profile raid-commonsvcs-prod |
   $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
 # Build and push (use buildx for MacBooks!)
-cd app
 docker buildx build --platform linux/amd64 \
   -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG \
-  --push .
-cd ..
+  --push app/
 ```
 
 ## Step 5: Update Manifests
@@ -181,11 +180,9 @@ Now let's update to v2 and see ArgoCD automatically detect and deploy the change
 ```bash
 # 1. Build and push v2 image
 export IMAGE_TAG=v2
-cd app
 docker buildx build --platform linux/amd64 \
   -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG \
-  --push .
-cd ..
+  --push app/
 
 # 2. Update deployment manifest (image and IMAGE_TAG env var)
 sed -i '' "s|image:.*|image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG|" k8s/base/deployment.yaml
@@ -289,16 +286,16 @@ aws iam get-role --role-name GitHubActionsECRRole-$K8S_USERNAME --query 'Role.Ar
 
 ```bash
 # Delete the Docker Hub workflow (not needed for EKS)
-rm ../../.github/workflows/ci-dockerhub.yaml
+rm $REPO_ROOT/.github/workflows/ci-dockerhub.yaml
 
 # Update CI workflow to watch YOUR branch
-sed -i '' "s|YOUR_BRANCH_NAME|$BRANCH_NAME|" ../../.github/workflows/ci-ecr.yaml
+sed -i '' "s|YOUR_BRANCH_NAME|$BRANCH_NAME|" $REPO_ROOT/.github/workflows/ci-ecr.yaml
 
 # Verify the change
-grep "branches:" -A 1 ../../.github/workflows/ci-ecr.yaml
+grep "branches:" -A 1 $REPO_ROOT/.github/workflows/ci-ecr.yaml
 
 # Commit and push
-git add ../../.github/workflows/
+git add $REPO_ROOT/.github/workflows/
 git commit -m "Enable CI/CD for $BRANCH_NAME"
 git pull --rebase origin $BRANCH_NAME
 git push origin $BRANCH_NAME

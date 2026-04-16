@@ -47,7 +47,7 @@ jobs:
         IMAGE_TAG: ${{ steps.image-tag.outputs.tag }}
       run: |
         cd 01-gitops-basics/app
-        docker buildx build --platform linux/amd64 \
+        docker buildx build --platform linux/amd64,linux/arm64 \
           -t $DOCKER_REPO:$IMAGE_TAG \
           --push .
         echo "IMAGE_FULL_PATH=$DOCKER_REPO:$IMAGE_TAG" >> $GITHUB_ENV
